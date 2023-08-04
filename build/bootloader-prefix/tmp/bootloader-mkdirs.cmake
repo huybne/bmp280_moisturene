@@ -5,18 +5,18 @@ cmake_minimum_required(VERSION 3.5)
 
 file(MAKE_DIRECTORY
   "C:/Espressif/frameworks/esp-idf-v5.0.1/components/bootloader/subproject"
-  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader"
-  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix"
-  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix/tmp"
-  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix/src/bootloader-stamp"
-  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix/src"
-  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix/src/bootloader-stamp"
+  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader"
+  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix"
+  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix/tmp"
+  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix/src/bootloader-stamp"
+  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix/src"
+  "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()

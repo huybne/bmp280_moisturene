@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/build/bootloader/esp-idf/soc/esp32/cmake_install.cmake")
+  include("C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/build/bootloader/esp-idf/soc/esp32/cmake_install.cmake")
 endif()
 

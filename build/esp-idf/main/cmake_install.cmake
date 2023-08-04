@@ -1,8 +1,8 @@
-# Install script for directory: C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/haha/main
+# Install script for directory: C:/Espressif/frameworks/esp-idf-v5.0.1/examples/get-started/smart_garden/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/hihi")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/smart_garden")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

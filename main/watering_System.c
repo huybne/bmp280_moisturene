@@ -10,7 +10,15 @@
 #include "esp_err.h"
 #include "bmp280_i2c.h"
 #include "bmp280_i2c_hal.h"
+#include <time.h>
+#include "esp_timer.h"
+#include <string.h>
+#include "esp_sleep.h"
 
+
+#define WAKEUP_HOUR_1 5   // Giờ đánh thức lần 1: 5h
+#define WAKEUP_HOUR_2 17  // Giờ đánh thức lần 2: 17h
+#define WAKEUP_MINUTE 59  // Phút đánh thức: 59
 
 #define WATER_PIN GPIO_NUM_12
 #define SENSOR_PIN ADC1_CHANNEL_4
@@ -66,7 +74,14 @@ void BMP280_init(void) {
     }
 }
 
+void watering_timer_callback(void *arg) {
+    gpio_set_level(WATER_PIN, 1); // Bắt đầu tưới cây
+    vTaskDelay(20 * 1000 / portTICK_PERIOD_MS); // Tưới trong vòng 20 giây
+    gpio_set_level(WATER_PIN, 0); // Kết thúc tưới cây
+}
+
 void measure(void) {
+
     float moisture;
     bmp280_data_t bmp280_data;
 
@@ -117,13 +132,59 @@ void measure(void) {
         gpio_set_level(WATER_PIN, 0); // Turn off water pump
         vTaskDelay(watertime * 6000 / portTICK_PERIOD_MS);
     }
+
+        esp_deep_sleep_start();
 }
+
+void calculate_wakeup_time(struct tm *timeinfo, time_t *wakeup_time) {
+    if (timeinfo->tm_hour < WAKEUP_HOUR_1 || (timeinfo->tm_hour == WAKEUP_HOUR_1 && timeinfo->tm_min < WAKEUP_MINUTE)) {
+        timeinfo->tm_hour = WAKEUP_HOUR_1;
+        timeinfo->tm_min = WAKEUP_MINUTE;
+    } else if (timeinfo->tm_hour < WAKEUP_HOUR_2 || (timeinfo->tm_hour == WAKEUP_HOUR_2 && timeinfo->tm_min < WAKEUP_MINUTE)) {
+        timeinfo->tm_hour = WAKEUP_HOUR_2;
+        timeinfo->tm_min = WAKEUP_MINUTE;
+    } else {
+        // Đánh thức vào lúc 5h59 ngày hôm sau
+        timeinfo->tm_hour = WAKEUP_HOUR_1;
+        timeinfo->tm_min = WAKEUP_MINUTE;
+        timeinfo->tm_mday += 1;
+    }
+    timeinfo->tm_sec = 0;
+    *wakeup_time = mktime(timeinfo);
+}
+time_t wakeup_time = 0;
 
 void app_main(void) {
     LCD_init();
     BMP280_init();
 
+    // Khởi tạo hệ thống và cấu hình NTP   
     while (1) {
+        // Lấy thời gian thực
+        time_t now;
+        time(&now);
+        struct tm timeinfo;
+        localtime_r(&now, &timeinfo);
+
+        // Nếu chưa đặt thời gian đánh thức hoặc đã đến thời điểm đánh thức
+        if (wakeup_time == 0 || now >= wakeup_time) {
+            // Tính toán thời gian đánh thức
+            calculate_wakeup_time(&timeinfo, &wakeup_time);
+
+            // In thông tin về thời gian đánh thức
+            char strftime_buf[64];
+            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+            ESP_LOGI(TAG, "Next wakeup time: %s", strftime_buf);
+
+            // Chuẩn bị cho chế độ ngủ sâu
+            esp_sleep_enable_timer_wakeup((wakeup_time - now) * 1000000);
+            esp_deep_sleep_start(); // Đưa ESP32 vào chế độ ngủ sâu
+        }
+
+        // Khi thức dậy từ chế độ ngủ, tiếp tục đo và tưới cây
         measure();
+
+        // Delay một khoảng thời gian trước khi đo nhiệt độ và độ ẩm lần tiếp theo
+
     }
 }

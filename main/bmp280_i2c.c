@@ -174,7 +174,7 @@ int16_t bmp280_i2c_read_data(bmp280_data_t *dt)
     t = (t_fine * 5 + 128) >> 8;
     dt->temperature = t;
 
-    var1_p = ((int64_t)t_fine) - 128000;
+    var1_p = ((int64_t)t_fine) - 128000;x
     var2_p = var1_p * var1_p * (int64_t)calib_params.dig_p6;
     var2_p = var2_p + ((var1_p*(int64_t)calib_params.dig_p5)<<17);
     var2_p = var2_p + (((int64_t)calib_params.dig_p4)<<35);

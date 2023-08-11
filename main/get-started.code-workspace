@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"name": "toilamprjmoi",
+			"path": "../../../../../../../Users/Admin/OneDrive - Hanoi University of Science and Technology/Documents/PlatformIO/Projects/toilamprjmoi"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"array": "cpp",
+			"string": "cpp"
+		}
+	}
+}

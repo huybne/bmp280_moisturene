@@ -11,16 +11,9 @@
 #include "bmp280_i2c.h"
 #include "bmp280_i2c_hal.h"
 #include <time.h>
-#include "esp_timer.h"
-#include <string.h>
 #include "esp_sleep.h"
 
-
-#define WAKEUP_HOUR_1 5   // Giờ đánh thức lần 1: 5h
-#define WAKEUP_HOUR_2 17  // Giờ đánh thức lần 2: 17h
-#define WAKEUP_MINUTE 59  // Phút đánh thức: 59
-
-#define WATER_PIN GPIO_NUM_12
+#define WATER_PIN GPIO_NUM_2
 #define SENSOR_PIN ADC1_CHANNEL_4
 static const adc_atten_t atten = ADC_ATTEN_DB_11;
 lcd1602_t lcdtmp = {0};
@@ -73,15 +66,12 @@ void BMP280_init(void) {
         ESP_LOGE(TAG, "BMP280 initialization failed!");
     }
 }
+void setup(){
+    esp_rom_gpio_pad_select_gpio(WATER_PIN);
+    gpio_set_direction(WATER_PIN, GPIO_MODE_OUTPUT);
 
-void watering_timer_callback(void *arg) {
-    gpio_set_level(WATER_PIN, 1); // Bắt đầu tưới cây
-    vTaskDelay(20 * 1000 / portTICK_PERIOD_MS); // Tưới trong vòng 20 giây
-    gpio_set_level(WATER_PIN, 0); // Kết thúc tưới cây
 }
-
 void measure(void) {
-
     float moisture;
     bmp280_data_t bmp280_data;
 
@@ -97,6 +87,7 @@ void measure(void) {
 
     lcd1602_set_pos(&lcdtmp, 0, 0);
     lcd1602_send_string(&lcdtmp, moisture_str);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     ESP_LOGI(TAG, "Moisture: %.2f%%", (float)moisture);
 
@@ -111,80 +102,36 @@ void measure(void) {
         // Update LCD display
         lcd1602_set_pos(&lcdtmp, 1, 0);
         lcd1602_send_string(&lcdtmp, temp_str);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     } else {
         ESP_LOGE(TAG, "Error reading data from BMP280!");
     }
 
     // Control watering based on moisture level
-    if (moisture < 70 && (float)bmp280_data.temperature > 26 ) {
+    if (moisture < 60 && (float)bmp280_data.temperature/100 > 10 && (float)bmp280_data.temperature/100 < 40 ) {
         gpio_set_level(WATER_PIN, 1); // Turn on water pump
-        vTaskDelay(watertime * 1000 / portTICK_PERIOD_MS);
-    } else if( moisture < 70  ) {
-        gpio_set_level(WATER_PIN, 1); // Turn on water pump
-        vTaskDelay(watertime * 1000 / portTICK_PERIOD_MS);
-    }
-    else if( (float)bmp280_data.temperature > 30){
-        gpio_set_level(WATER_PIN, 1); // Turn on water pump
-        vTaskDelay(watertime * 1000 / portTICK_PERIOD_MS);
+        vTaskDelay(watertime *   
+        
+        7000 / portTICK_PERIOD_MS);
+
     }
     else
     {
         gpio_set_level(WATER_PIN, 0); // Turn off water pump
-        vTaskDelay(watertime * 6000 / portTICK_PERIOD_MS);
+        vTaskDelay(watertime * 1000 / portTICK_PERIOD_MS); // 
     }
-
-        esp_deep_sleep_start();
+    
 }
-
-void calculate_wakeup_time(struct tm *timeinfo, time_t *wakeup_time) {
-    if (timeinfo->tm_hour < WAKEUP_HOUR_1 || (timeinfo->tm_hour == WAKEUP_HOUR_1 && timeinfo->tm_min < WAKEUP_MINUTE)) {
-        timeinfo->tm_hour = WAKEUP_HOUR_1;
-        timeinfo->tm_min = WAKEUP_MINUTE;
-    } else if (timeinfo->tm_hour < WAKEUP_HOUR_2 || (timeinfo->tm_hour == WAKEUP_HOUR_2 && timeinfo->tm_min < WAKEUP_MINUTE)) {
-        timeinfo->tm_hour = WAKEUP_HOUR_2;
-        timeinfo->tm_min = WAKEUP_MINUTE;
-    } else {
-        // Đánh thức vào lúc 5h59 ngày hôm sau
-        timeinfo->tm_hour = WAKEUP_HOUR_1;
-        timeinfo->tm_min = WAKEUP_MINUTE;
-        timeinfo->tm_mday += 1;
-    }
-    timeinfo->tm_sec = 0;
-    *wakeup_time = mktime(timeinfo);
-}
-time_t wakeup_time = 0;
 
 void app_main(void) {
+    
+    setup();
     LCD_init();
     BMP280_init();
-
-    // Khởi tạo hệ thống và cấu hình NTP   
     while (1) {
-        // Lấy thời gian thực
-        time_t now;
-        time(&now);
-        struct tm timeinfo;
-        localtime_r(&now, &timeinfo);
-
-        // Nếu chưa đặt thời gian đánh thức hoặc đã đến thời điểm đánh thức
-        if (wakeup_time == 0 || now >= wakeup_time) {
-            // Tính toán thời gian đánh thức
-            calculate_wakeup_time(&timeinfo, &wakeup_time);
-
-            // In thông tin về thời gian đánh thức
-            char strftime_buf[64];
-            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-            ESP_LOGI(TAG, "Next wakeup time: %s", strftime_buf);
-
-            // Chuẩn bị cho chế độ ngủ sâu
-            esp_sleep_enable_timer_wakeup((wakeup_time - now) * 1000000);
-            esp_deep_sleep_start(); // Đưa ESP32 vào chế độ ngủ sâu
-        }
-
-        // Khi thức dậy từ chế độ ngủ, tiếp tục đo và tưới cây
-        measure();
-
-        // Delay một khoảng thời gian trước khi đo nhiệt độ và độ ẩm lần tiếp theo
-
+            measure();
+        const unsigned int sleep_duration = 3600;
+        ESP_LOGI(TAG, "Entering deep sleep for %d seconds", sleep_duration);
+        esp_deep_sleep(sleep_duration * 1000000); // Convert seconds to microseconds
     }
 }
